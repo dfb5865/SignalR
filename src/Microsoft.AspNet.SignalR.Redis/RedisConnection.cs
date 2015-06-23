@@ -25,6 +25,19 @@ namespace Microsoft.AspNet.SignalR.Redis
             _redisSubscriber = _connection.GetSubscriber();
         }
 
+		public void Connect(string connectionString, TraceSource trace)
+		{
+			_connection = ConnectionMultiplexer.Connect(connectionString);
+
+			_connection.ConnectionFailed += OnConnectionFailed;
+			_connection.ConnectionRestored += OnConnectionRestored;
+			_connection.ErrorMessage += OnError;
+
+			_trace = trace;
+
+			_redisSubscriber = _connection.GetSubscriber();
+		}
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         public void Close(string key, bool allowCommandsToComplete = true)
         {

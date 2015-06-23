@@ -45,6 +45,16 @@ namespace Microsoft.AspNet.SignalR
         /// </summary>
         public int Database { get; set; }
 
+		/// <summary>
+		/// Set to true to connect to the redis server synchronously.
+		/// This will skip the async reconfiguration skip in
+		/// StackExchange.Redis.
+		/// Useful when your redis implementation doesn't allow the CONFIG command.
+		/// eg. AWS Elasticache
+		/// Defaults to false.
+		/// </summary>
+		public bool ConnectSynchronously { get; set; }
+
         /// <summary>
         /// The Redis event key to use.
         /// </summary>

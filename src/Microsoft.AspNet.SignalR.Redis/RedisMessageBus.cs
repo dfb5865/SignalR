@@ -20,6 +20,7 @@ namespace Microsoft.AspNet.SignalR.Redis
 
         private readonly int _db;
         private readonly string _key;
+		private readonly bool _connectSynchronously;
         private readonly TraceSource _trace;
 
         private IRedisConnection _connection;
@@ -46,6 +47,7 @@ namespace Microsoft.AspNet.SignalR.Redis
             _connectionString = configuration.ConnectionString;
             _db = configuration.Database;
             _key = configuration.EventKey;
+			_connectSynchronously = configuration.ConnectSynchronously;
 
             var traceManager = resolver.Resolve<ITraceManager>();
 
@@ -154,7 +156,14 @@ namespace Microsoft.AspNet.SignalR.Redis
             {
                 try
                 {
-                    await ConnectToRedisAsync();
+					if (_connectSynchronously)
+					{
+						await ConnectToRedis();
+					}
+					else
+					{
+						await ConnectToRedisAsync();
+					}
 
                     var oldState = Interlocked.CompareExchange(ref _state,
                                                State.Connected,
@@ -212,6 +221,30 @@ namespace Microsoft.AspNet.SignalR.Redis
 
             _trace.TraceVerbose("Subscribed to event " + _key);
         }
+
+		private async Task ConnectToRedis()
+		{
+			if (_connection != null)
+			{
+				_connection.ConnectionFailed -= OnConnectionFailed;
+				_connection.ErrorMessage -= OnConnectionError;
+				_connection.ConnectionRestored -= OnConnectionRestored;
+			}
+
+			_trace.TraceInformation("Connecting...");
+
+			_connection.Connect(_connectionString, _trace);
+
+			_trace.TraceInformation("Connection opened");
+
+			_connection.ConnectionFailed += OnConnectionFailed;
+			_connection.ErrorMessage += OnConnectionError;
+			_connection.ConnectionRestored += OnConnectionRestored;
+
+			await _connection.SubscribeAsync(_key, OnMessage);
+
+			_trace.TraceVerbose("Subscribed to event " + _key);
+		}
 
         private void OnMessage(int streamIndex, RedisMessage message)
         {

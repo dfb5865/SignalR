@@ -8,6 +8,8 @@ namespace Microsoft.AspNet.SignalR.Redis
     {
         Task ConnectAsync(string connectionString, TraceSource trace);
 
+		void Connect(string connectionString, TraceSource trace);
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1026:DefaultParametersShouldNotBeUsed")]
         void Close(string key, bool allowCommandsToComplete = true);
 
